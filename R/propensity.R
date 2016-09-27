@@ -49,81 +49,71 @@ propensity_summary.glm <- function(fit) {
   } 
 
   # propensity scores
-  ps <- qwraps2::invlogit(fitted(fit))
+  ps <- qwraps2::invlogit(stats::fitted(fit))
 
+  # get all the variable from the model fit and build the needed model matrix,
+  # including the dumby variables for factors and character variables.
+  av <- all.vars(stats::formula(fit))
 
-}
+  mm <- lapply(attr(stats::terms(stats::formula(fit)), "term.labels"),
+               function(x) { stats::as.formula(paste("~", x, "+0")) }) 
+  mm <- lapply(mm, stats::model.matrix, data = dplyr::select_(fit$data, .dots = av))
+  mm <- do.call(cbind, mm)
 
+  # build a summary data.frame and add weights
+  out <- dplyr::bind_cols(dplyr::data_frame(z, ps), dplyr::as_data_frame(mm))
+  out <- dplyr::rowwise(out)
+  out <- dplyr::mutate_(out, .dots = list("w" = ~ min(c(ps, 1-ps)) / (z*ps + (1-z)*(1-ps)))) #, w_2 = 1/(z*ps + (1-z)*(1-ps)), w_3 = z + (1-z)*ps/(1-ps))
+  out <- dplyr::ungroup(out)
 
+  # Calculate the mean and variance for (unadjusted) values and adjusted values
+  # out <- tidyr::gather(out, key, value, -z, -w)
+  out <- tidyr::gather_(out, key_col = "key", value_col = "value",
+                        gather_cols = c(colnames(mm)))
 
-propensity_summary.default <- function(fit) {
-  z <- as.integer(stats::model.frame(fit)[[1]])
+  out <- dplyr::group_by_(out, .dots = list( ~ key, ~ z))
+  out <- dplyr::summarize_(out, 
+                           .dots = list(~ mean(value), 
+                                        ~ var(value),
+                                        `mean(adjvalue)` = ~ sum(w * value) / sum(w),
+                                        `var(adjvalue)`  = ~ sum(w * (value - `mean(adjvalue)`)^2) / (sum(w) - 1)))
+  out <- dplyr::ungroup(out)
 
+  # Split the data.frame by exposure and column bind
+  out <- dplyr::left_join(dplyr::filter_(out, .dots = list( ~ z == 0)),
+                          dplyr::filter_(out, .dots = list( ~ z == 1)),
+                          by = "key",
+                          suffix = c(".z0", ".z1"))
+  out <- dplyr::select_(out, .dots = list( ~ -z.z0, ~ -z.z1))
 
-  w <- qwraps2::invlogit(fitted(fit))
-
-  av <- all.vars(formula(fit))
-
-  mm <-
-    lapply(attr(terms(formula(fit)), "term.labels"),
-           function(x) {
-             as.formula(paste("~", x, "+0"))
-           }) %>%
-    lapply(., model.matrix, data = dplyr::select_(fit$data, .dots = av)) %>%
-    do.call(cbind, .)
-
-  out <-
-    dplyr::bind_cols(dplyr::data_frame(z, w), as_data_frame(mm)) %>%
-
-    dplyr::rowwise() %>%
-    dplyr::mutate(w = min(c(w, 1-w)) / (z*w + (1-z)*(1-w))) %>%
-    # dplyr::mutate(w = 1/(z*w + (1-z)*(1-w))) %>%
-    # dplyr::mutate(w = z + (1-z)*w/(1-w)) %>%
-    dplyr::ungroup() %>%
-
-    tidyr::gather(key, value, -z, -w) %>%
-
-    dplyr::group_by(key, z) %>%
-    dplyr::summarize(mean(value), var(value),
-                     `mean(adjvalue)` = sum(w * value) / sum(w),
-                     `var(adjvalue)`  = sum(w * (value - `mean(adjvalue)`)^2) / (sum(w) - 1)
-                     ) %>%
-    dplyr::ungroup() %>%
-
-    {
-    dplyr::left_join(dplyr::filter(., z == 0),
-                     dplyr::filter(., z == 1),
-                     by = "key",
-                     suffix = c(".z0", ".z1"))
-    } %>%
-
-    dplyr::select(-z.z0, -z.z1) %>%
-
-    dplyr::mutate(`unadj std diff` = 100 * (`mean(value).z1` - `mean(value).z0`)       / sqrt((`var(value).z1` + `var(value).z0`)/2),
-                  `adj std diff`   = 100 * (`mean(adjvalue).z1` - `mean(adjvalue).z0`) / sqrt((`var(adjvalue).z1` + `var(adjvalue).z0`)/2),
-                  `continuousvar` = as.integer(key %in% names(stats::model.frame(fit))))  %>%
-
-    dplyr::rowwise() %>%
-
-    dplyr::summarize(key,
-                     `unadj z1` = if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(value).z1`)), " (", qwraps2::frmt(sqrt(`var(value).z1`)), ")") } else {qwraps2::frmt(mean(`mean(value).z1`)*100, 1)},
-                     `unadj z0` = if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(value).z0`)), " (", qwraps2::frmt(sqrt(`var(value).z0`)), ")") } else {qwraps2::frmt(mean(`mean(value).z0`)*100, 1)},
-                     `unadj std diff` = qwraps2::frmt(`unadj std diff`, 1),
-                     `adj z1` = if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(adjvalue).z1`)), " (", qwraps2::frmt(sqrt(`var(adjvalue).z1`)), ")") } else {qwraps2::frmt(mean(`mean(adjvalue).z1`)*100, 1)},
-                     `adj z0` = if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(adjvalue).z0`)), " (", qwraps2::frmt(sqrt(`var(adjvalue).z0`)), ")") } else {qwraps2::frmt(mean(`mean(adjvalue).z0`)*100, 1)},
-                     `adj std diff` = qwraps2::frmt(`adj std diff`, 1)
-                     )
+  # calculate the standardized difference (%)
+  # add a column to not if the variable is continous or a factor
+  out <- dplyr::mutate_(out, 
+                        .dots = list(
+                       `unadj std diff` = ~ 100 * (`mean(value).z1` - `mean(value).z0`)       / sqrt((`var(value).z1` + `var(value).z0`)/2),
+                       `adj std diff`   = ~ 100 * (`mean(adjvalue).z1` - `mean(adjvalue).z0`) / sqrt((`var(adjvalue).z1` + `var(adjvalue).z0`)/2),
+                       `continuousvar` =  ~ as.integer(key %in% names(stats::model.frame(fit)))))
 
   class(out) <- c("propensity_summary", class(out))
   out
 }
 
-################################################################################
-# plot.propensity_summary
-#
-# An plotting method for propensity_summary objects
-plot.propensity_summary <- function(x, y, ...) {
+#' @export
+summary.propensity_summary <- function(object, ...) {
+  dplyr::summarize_(dplyr::rowwise(object),
+                    .dots = list(
+                                 key = ~ key,
+                                 `unadj z1` = ~ if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(value).z1`)), " (", qwraps2::frmt(sqrt(`var(value).z1`)), ")") } else {qwraps2::frmt(mean(`mean(value).z1`)*100, 1)},
+                                 `unadj z0` = ~ if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(value).z0`)), " (", qwraps2::frmt(sqrt(`var(value).z0`)), ")") } else {qwraps2::frmt(mean(`mean(value).z0`)*100, 1)},
+                                 `unadj std diff` = ~ qwraps2::frmt(`unadj std diff`, 1),
+                                 `adj z1` = ~ if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(adjvalue).z1`)), " (", qwraps2::frmt(sqrt(`var(adjvalue).z1`)), ")") } else {qwraps2::frmt(mean(`mean(adjvalue).z1`)*100, 1)},
+                                 `adj z0` = ~ if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(adjvalue).z0`)), " (", qwraps2::frmt(sqrt(`var(adjvalue).z0`)), ")") } else {qwraps2::frmt(mean(`mean(adjvalue).z0`)*100, 1)},
+                                 `adj std diff` = ~ qwraps2::frmt(`adj std diff`, 1)
+                                 )) 
+}
 
+#' @export
+plot.propensity_summary <- function(x, y, ...) { 
   plotting_data <-
     dplyr::select_(x, .dots = list("key", "`unadj std diff`", "`adj std diff`"))
 
@@ -132,7 +122,6 @@ plot.propensity_summary <- function(x, y, ...) {
                    key_col = 'variable',
                    value_col = 'stddiff',
                    gather_cols = list("unadj std diff", "adj std diff"))
-  plotting_data$stddiff <- as.numeric(plotting_data$stddiff)
 
   plotting_data$variable <- factor(plotting_data$variable)
 
@@ -146,6 +135,4 @@ plot.propensity_summary <- function(x, y, ...) {
   ggplot2::geom_vline(xintercept = 0) +
   ggplot2::theme(axis.title.y = ggplot2::element_blank())
 }
-
-
 

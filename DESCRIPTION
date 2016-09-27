@@ -3,15 +3,17 @@ Title: What the Package Does (one line, title case)
 Version: 0.0.0.9000
 Authors@R: person("Peter", "DeWitt", email = "peter.dewitt@ucdenver.edu", role = c("aut", "cre"))
 Description: A collection of helper-functions for analysis, summary statitics,
-    and graphics specific for the Intracranial-pressure (ICP) monitoring project.  
-Depends: 
+    and graphics specific for the Intracranial-pressure (ICP) monitoring project.
+Depends:
     R (>= 3.0.2)
 Imports:
     dplyr (>= 0.5.0),
     ggplot2 (>= 2.0.0),
-    qwrap2 (>= 0.2.2),
+    qwraps2 (>= 0.2.2),
     tidyr (>= 0.6.0)
-License: What license is it under?
+License: GPL-2
 Encoding: UTF-8
 LazyData: true
-Suggests: testthat
+Suggests:
+    testthat
+RoxygenNote: 5.0.1
