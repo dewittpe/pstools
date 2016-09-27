@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 *.swp
+*.tar.gz
+icptools.Rcheck/

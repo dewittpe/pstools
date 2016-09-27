@@ -31,13 +31,23 @@
 #' @seealso \code{\link[stats]{glm}} for fitting logistic regression models, or 
 #' \code{\link[geepack]{geeglm}} for fitting GEEs.
 #'
+#' @examples
+#'
+#' data(pride, package = 'icptools')
+#' glmfit <- stats::glm(PCR_RSV ~ SEX + RSVINF + REGION + AGE + ELTATOP + EINZ + EXT, 
+#'                      data = pride,
+#'                      family = stats::binomial())
+#' propensity(glmfit)
+#' summary(propensity(glmfit))
+#' plot(propensity(glmfit))
+#'
 #' @export
-propensity_summary <- function(fit) {
-  UseMethod("propensity_summary")
+propensity <- function(fit) {
+  UseMethod("propensity")
 }
 
 #' @export
-propensity_summary.glm <- function(fit) {
+propensity.glm <- function(fit) {
   if (stats::family(fit)$family != "binomial") {
     stop("expected binomial family regreesion model.")
   }
@@ -90,38 +100,38 @@ propensity_summary.glm <- function(fit) {
   # add a column to not if the variable is continous or a factor
   out <- dplyr::mutate_(out, 
                         .dots = list(
-                       `unadj std diff` = ~ 100 * (`mean(value).z1` - `mean(value).z0`)       / sqrt((`var(value).z1` + `var(value).z0`)/2),
-                       `adj std diff`   = ~ 100 * (`mean(adjvalue).z1` - `mean(adjvalue).z0`) / sqrt((`var(adjvalue).z1` + `var(adjvalue).z0`)/2),
+                       `unadj std diff (%)` = ~ 100 * (`mean(value).z1` - `mean(value).z0`)       / sqrt((`var(value).z1` + `var(value).z0`)/2),
+                       `adj std diff (%)`   = ~ 100 * (`mean(adjvalue).z1` - `mean(adjvalue).z0`) / sqrt((`var(adjvalue).z1` + `var(adjvalue).z0`)/2),
                        `continuousvar` =  ~ as.integer(key %in% names(stats::model.frame(fit)))))
 
-  class(out) <- c("propensity_summary", class(out))
+  class(out) <- c("icptools_propensity", class(out))
   out
 }
 
 #' @export
-summary.propensity_summary <- function(object, ...) {
+summary.icptools_propensity <- function(object, ...) {
   dplyr::summarize_(dplyr::rowwise(object),
                     .dots = list(
                                  key = ~ key,
                                  `unadj z1` = ~ if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(value).z1`)), " (", qwraps2::frmt(sqrt(`var(value).z1`)), ")") } else {qwraps2::frmt(mean(`mean(value).z1`)*100, 1)},
                                  `unadj z0` = ~ if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(value).z0`)), " (", qwraps2::frmt(sqrt(`var(value).z0`)), ")") } else {qwraps2::frmt(mean(`mean(value).z0`)*100, 1)},
-                                 `unadj std diff` = ~ qwraps2::frmt(`unadj std diff`, 1),
+                                 `unadj std diff (%)` = ~ qwraps2::frmt(`unadj std diff (%)`, 1),
                                  `adj z1` = ~ if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(adjvalue).z1`)), " (", qwraps2::frmt(sqrt(`var(adjvalue).z1`)), ")") } else {qwraps2::frmt(mean(`mean(adjvalue).z1`)*100, 1)},
                                  `adj z0` = ~ if (continuousvar) { paste0(qwraps2::frmt(mean(`mean(adjvalue).z0`)), " (", qwraps2::frmt(sqrt(`var(adjvalue).z0`)), ")") } else {qwraps2::frmt(mean(`mean(adjvalue).z0`)*100, 1)},
-                                 `adj std diff` = ~ qwraps2::frmt(`adj std diff`, 1)
+                                 `adj std diff (%)` = ~ qwraps2::frmt(`adj std diff (%)`, 1)
                                  )) 
 }
 
 #' @export
-plot.propensity_summary <- function(x, y, ...) { 
+plot.icptools_propensity <- function(x, y, ...) { 
   plotting_data <-
-    dplyr::select_(x, .dots = list("key", "`unadj std diff`", "`adj std diff`"))
+    dplyr::select_(x, .dots = list("key", "`unadj std diff (%)`", "`adj std diff (%)`"))
 
   plotting_data <-
     tidyr::gather_(plotting_data,
                    key_col = 'variable',
-                   value_col = 'stddiff',
-                   gather_cols = list("unadj std diff", "adj std diff"))
+                   value_col = 'stddiff (%)',
+                   gather_cols = list("unadj std diff (%)", "adj std diff (%)"))
 
   plotting_data$variable <- factor(plotting_data$variable)
 
@@ -130,7 +140,7 @@ plot.propensity_summary <- function(x, y, ...) {
 
   ggplot2::ggplot(plotting_data) +
   ggplot2::theme_bw() +
-  ggplot2::aes_string(x = "stddiff", y = "key") +
+  ggplot2::aes_string(x = "`stddiff (%)`", y = "key") +
   ggplot2::geom_point(mapping = ggplot2::aes_string(color = "variable", shape = "variable")) +
   ggplot2::geom_vline(xintercept = 0) +
   ggplot2::theme(axis.title.y = ggplot2::element_blank())
