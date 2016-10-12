@@ -27,7 +27,7 @@
 #' @param weight_method one of three methods for defining the weight for each
 #' row of the data set.  See Details.
 #'
-#' @return A \code{icptools_propensity} object which is a
+#' @return A \code{pstools_propensity} object which is a
 #' \code{data.frame} with columns summarizing each varaible used as a predictor in the
 #' propensity model. The function will determine if each variable is a
 #' categorical or continous variable. if the variable is continuous the mean (sd)
@@ -45,7 +45,7 @@
 #'
 #' @examples
 #'
-#' data(pride, package = 'icptools')
+#' data(pride, package = 'pstools')
 #' glmfit <- stats::glm(PCR_RSV ~ SEX + RSVINF + REGION + AGE + ELTATOP + EINZ + EXT, 
 #'                      data = pride,
 #'                      family = stats::binomial())
@@ -128,12 +128,12 @@ propensity.glm <- function(fit, weight_method = 1) {
                        `adj std diff (%)`   = ~ 100 * (`mean(adjvalue).z1` - `mean(adjvalue).z0`) / sqrt((`var(adjvalue).z1` + `var(adjvalue).z0`)/2),
                        `continuousvar` =  ~ as.integer(key %in% names(stats::model.frame(fit)))))
 
-  class(out) <- c("icptools_propensity", class(out))
+  class(out) <- c("pstools_propensity", class(out))
   out
 }
 
 #' @export
-summary.icptools_propensity <- function(object, ...) {
+summary.pstools_propensity <- function(object, ...) {
   dplyr::summarize_(dplyr::rowwise(object),
                     .dots = list(
                                  key = ~ key,
@@ -147,7 +147,7 @@ summary.icptools_propensity <- function(object, ...) {
 }
 
 #' @export
-plot.icptools_propensity <- function(x, y, ...) { 
+plot.pstools_propensity <- function(x, y, ...) { 
   plotting_data <-
     dplyr::select_(x, .dots = list("key", "`unadj std diff (%)`", "`adj std diff (%)`"))
 
