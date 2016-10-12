@@ -1,7 +1,6 @@
-# icptools
+# pstools
 
-A collection of helper-functions for analysis, summary statitics, and graphics
-specific for the Intracranial-pressure (ICP) monitoring project.
+Tools for Propensity Score Analyses
 
 ## Install
 

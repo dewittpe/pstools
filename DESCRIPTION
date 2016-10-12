@@ -1,5 +1,5 @@
-Package: icptools
-Title: Tools for the ICP Monitoring Project
+Package: pstools
+Title: Propensity Score Analysis Tools
 Version: 0.1.0
 Authors@R: person("Peter", "DeWitt", email = "peter.dewitt@ucdenver.edu", role = c("aut", "cre"))
 Description: A collection of helper-functions for analysis, summary statitics,
