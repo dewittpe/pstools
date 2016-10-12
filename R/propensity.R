@@ -45,7 +45,7 @@
 #'
 #' @examples
 #'
-#' data(pride, package = 'pstools')
+#' data(pride)
 #' glmfit <- stats::glm(PCR_RSV ~ SEX + RSVINF + REGION + AGE + ELTATOP + EINZ + EXT, 
 #'                      data = pride,
 #'                      family = stats::binomial())

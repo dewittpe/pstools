@@ -28,7 +28,7 @@
 #'
 #' @examples
 #' library(ggplot2)
-#' data(pride, package = "icptools")
+#' data(pride, package = "pstools")
 #' 
 #' glmfit <- stats::glm(PCR_RSV ~ SEX + RSVINF + REGION + AGE + ELTATOP + EINZ + EXT, 
 #'                      data = pride, family = stats::binomial())

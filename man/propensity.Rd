@@ -13,7 +13,7 @@ propensity(fit, weight_method = 1)
 row of the data set.  See Details.}
 }
 \value{
-A \code{icptools_propensity} object which is a
+A \code{pstools_propensity} object which is a
 \code{data.frame} with columns summarizing each varaible used as a predictor in the
 propensity model. The function will determine if each variable is a
 categorical or continous variable. if the variable is continuous the mean (sd)
@@ -48,7 +48,7 @@ Let ps = Pr[Z = 1 | X].  The default setting is \code{weight_method = 1}.
 }
 \examples{
 
-data(pride, package = 'icptools')
+data(pride)
 glmfit <- stats::glm(PCR_RSV ~ SEX + RSVINF + REGION + AGE + ELTATOP + EINZ + EXT, 
                      data = pride,
                      family = stats::binomial())

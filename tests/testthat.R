@@ -1,4 +1,4 @@
 library(testthat)
-library(icptools)
+library(pstools)
 
-test_check("icptools")
+test_check("pstools")

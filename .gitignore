@@ -3,4 +3,4 @@
 .RData
 *.swp
 *.tar.gz
-icptools.Rcheck/
+pstools.Rcheck/
