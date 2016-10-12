@@ -12,10 +12,22 @@
 #' was continous predictor. To get the summary for the proportion of males, and
 #' females will be reported too, use propensity_summary(geeglm(y ~
 #' factor(male))).
+#'
+#' @details
+#' \code{weight_method} controls the weight given to each row of the data set.
+#' Let ps = Pr[Z = 1 | X].  The default setting is \code{weight_method = 1}.
+#' 
+#' \describe{
+#'   \item{\code{weight_method = 1}}{\code{w =  min(c(ps, 1-ps)) / (z*ps + (1-z)*(1-ps))}}
+#'   \item{\code{weight_method = 2}}{\code{w = 1/(z*ps + (1-z)*(1-ps))}}
+#'   \item{\code{weight_method = 3}}{\code{w = z + (1-z)*ps/(1-ps))}}
+#' }
 #' 
 #' @param fit a regression object such as 
+#' @param weight_method one of three methods for defining the weight for each
+#' row of the data set.  See Details.
 #'
-#' @return A \code{propensity_summary} object which is a
+#' @return A \code{icptools_propensity} object which is a
 #' \code{data.frame} with columns summarizing each varaible used as a predictor in the
 #' propensity model. The function will determine if each variable is a
 #' categorical or continous variable. if the variable is continuous the mean (sd)
@@ -42,12 +54,16 @@
 #' plot(propensity(glmfit))
 #'
 #' @export
-propensity <- function(fit) {
+propensity <- function(fit, weight_method = 1) {
   UseMethod("propensity")
 }
 
 #' @export
-propensity.glm <- function(fit) {
+propensity.glm <- function(fit, weight_method = 1) {
+  if (!(weight_method %in% 1:3)) { 
+    stop("weight_method needs to be 1, 2, or 3.")
+  }
+
   if (stats::family(fit)$family != "binomial") {
     stop("expected binomial family regreesion model.")
   }
@@ -73,7 +89,15 @@ propensity.glm <- function(fit) {
   # build a summary data.frame and add weights
   out <- dplyr::bind_cols(dplyr::data_frame(z, ps), dplyr::as_data_frame(mm))
   out <- dplyr::rowwise(out)
-  out <- dplyr::mutate_(out, .dots = list("w" = ~ min(c(ps, 1-ps)) / (z*ps + (1-z)*(1-ps)))) #, w_2 = 1/(z*ps + (1-z)*(1-ps)), w_3 = z + (1-z)*ps/(1-ps))
+
+  if (weight_method == 1) { 
+    out <- dplyr::mutate_(out, .dots = list("w" = ~ min(c(ps, 1-ps)) / (z*ps + (1-z)*(1-ps))))
+  } else if (weight_method == 2) { 
+    out <- dplyr::mutate_(out, .dots = list("w" = ~  1/(z*ps + (1-z)*(1-ps))))
+  } else {
+    out <- dplyr::mutate_(out, .dots = list("w" = ~ z + (1-z)*ps/(1-ps)))
+  } 
+
   out <- dplyr::ungroup(out)
 
   # Calculate the mean and variance for (unadjusted) values and adjusted values
