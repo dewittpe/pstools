@@ -17,5 +17,6 @@ Encoding: UTF-8
 LazyData: true
 Suggests:
     geepack,
-    testthat
+    testthat,
+    covr
 RoxygenNote: 5.0.1

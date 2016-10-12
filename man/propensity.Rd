@@ -4,13 +4,16 @@
 \alias{propensity}
 \title{Propensity Summary}
 \usage{
-propensity(fit)
+propensity(fit, weight_method = 1)
 }
 \arguments{
 \item{fit}{a regression object such as}
+
+\item{weight_method}{one of three methods for defining the weight for each
+row of the data set.  See Details.}
 }
 \value{
-A \code{propensity_summary} object which is a
+A \code{icptools_propensity} object which is a
 \code{data.frame} with columns summarizing each varaible used as a predictor in the
 propensity model. The function will determine if each variable is a
 categorical or continous variable. if the variable is continuous the mean (sd)
@@ -32,6 +35,16 @@ propensity_summary(geeglm(y ~ male)) will summarize the variable male as if it
 was continous predictor. To get the summary for the proportion of males, and
 females will be reported too, use propensity_summary(geeglm(y ~
 factor(male))).
+
+
+\code{weight_method} controls the weight given to each row of the data set.
+Let ps = Pr[Z = 1 | X].  The default setting is \code{weight_method = 1}.
+
+\describe{
+  \item{\code{weight_method = 1}}{\code{w =  min(c(ps, 1-ps)) / (z*ps + (1-z)*(1-ps))}}
+  \item{\code{weight_method = 2}}{\code{w = 1/(z*ps + (1-z)*(1-ps))}}
+  \item{\code{weight_method = 3}}{\code{w = z + (1-z)*ps/(1-ps))}}
+}
 }
 \examples{
 
