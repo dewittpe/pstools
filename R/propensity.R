@@ -1,6 +1,6 @@
 #' Propensity Summary
 #'
-#' Given a logistic regression model generate a the propensity weights for the
+#' Given a logistic regression model, generate the propensity weights for the
 #' subjects (rows) in the data set.
 #'
 #' The regression model is expected to estimate the probability of an exposure
@@ -65,7 +65,7 @@ propensity.glm <- function(fit, weight_method = 1) {
   }
 
   if (stats::family(fit)$family != "binomial") {
-    stop("expected binomial family regreesion model.")
+    stop("expected binomial family regression model.")
   }
 
   # Exposure 1, no-exposure 0
