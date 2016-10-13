@@ -2,8 +2,8 @@ Package: pstools
 Title: Propensity Score Analysis Tools
 Version: 0.1.0.9000
 Authors@R: person("Peter", "DeWitt", email = "peter.dewitt@ucdenver.edu", role = c("aut", "cre"))
-Description: A collection of helper-functions for analysis, summary statitics,
-    and graphics specific for the Intracranial-pressure (ICP) monitoring project.
+Description: A collection of helper-functions for analysis, summary statistics,
+    and graphics for propensity analyses.
 Depends:
     R (>= 3.0.2)
 Imports:
