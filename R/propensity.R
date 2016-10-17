@@ -3,6 +3,7 @@
 #' Given a logistic regression model, generate the propensity weights for the
 #' subjects (rows) in the data set.
 #'
+#' @details
 #' The regression model is expected to estimate the probability of an exposure
 #' (Z = 1) given a set of predictors, X, i.e., Pr[Z = 1 | X].
 #'
@@ -13,7 +14,6 @@
 #' females will be reported too, use propensity_summary(geeglm(y ~
 #' factor(male))).
 #'
-#' @details
 #' \code{weight_method} controls the weight given to each row of the data set.
 #' Let ps = Pr[Z = 1 | X].  The default setting is \code{weight_method = 1}.
 #' 

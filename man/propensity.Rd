@@ -22,7 +22,7 @@ is returned.  Standard differences are reported as well. Unadjusted and
 Matched Weight (see Li and Greene (2012)) values are reported.
 }
 \description{
-Given a logistic regression model generate a the propensity weights for the
+Given a logistic regression model, generate the propensity weights for the
 subjects (rows) in the data set.
 }
 \details{
@@ -35,7 +35,6 @@ propensity_summary(geeglm(y ~ male)) will summarize the variable male as if it
 was continous predictor. To get the summary for the proportion of males, and
 females will be reported too, use propensity_summary(geeglm(y ~
 factor(male))).
-
 
 \code{weight_method} controls the weight given to each row of the data set.
 Let ps = Pr[Z = 1 | X].  The default setting is \code{weight_method = 1}.
