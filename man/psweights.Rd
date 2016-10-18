@@ -31,12 +31,15 @@ weights.
 Five different matching weights based on an exposure and propensity score.
 }
 \details{
-\tabular{ll}{
-Average causal effect in study population                                \tab \code{psw_IPW}           \cr
-Average causal effect in exposed                                         \tab \code{psw_ACE_Exposed}   \cr
-Average causal effect in unexposed                                       \tab \code{psw_ACE_Unexposed} \cr
-Average causes effect in population for which sample is most informative \tab \code{psw_ACE_MostInfo}  \cr
-Average causal effect in mathcin weight population                       \tab \code{psw_ACE_MWP}       \cr
+Let p denote the propensity score for a subject.  The five weights are as follows.
+
+\tabular{llcc}{
+                                                                         \tab                          \tab Exposed        \tab Non-Exposed        \cr
+Average causal effect in study population                                \tab \code{psw_IPW}           \tab 1/p            \tab 1/(1-p)            \cr
+Average causal effect in exposed                                         \tab \code{psw_ACE_Exposed}   \tab 1              \tab p/(1-p)            \cr
+Average causal effect in unexposed                                       \tab \code{psw_ACE_Unexposed} \tab (1-p)/p        \tab 1                  \cr
+Average causes effect in population for which sample is most informative \tab \code{psw_ACE_MostInfo}  \tab 1-p            \tab p                  \cr
+Average causal effect in mathcin weight population                       \tab \code{psw_ACE_MWP}       \tab min(p,(1-p))/p \tab min(p,(1-p))/(1-p) \cr
 }
 }
 \examples{

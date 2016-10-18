@@ -46,7 +46,7 @@ Let ps = Pr[Z = 1 | X].  The default setting is \code{weight_method = 1}.
 }
 }
 \examples{
-
+\dontrun{
 data(pride)
 glmfit <- stats::glm(PCR_RSV ~ SEX + RSVINF + REGION + AGE + ELTATOP + EINZ + EXT, 
                      data = pride,
@@ -54,7 +54,7 @@ glmfit <- stats::glm(PCR_RSV ~ SEX + RSVINF + REGION + AGE + ELTATOP + EINZ + EX
 propensity(glmfit)
 summary(propensity(glmfit))
 plot(propensity(glmfit))
-
+}
 }
 \references{
 Li, Liang, and Tom Greene. "A weighting analogue to pair matching in
