@@ -44,7 +44,7 @@
 #' \code{\link[geepack]{geeglm}} for fitting GEEs.
 #'
 #' @examples
-#'
+#' \dontrun{
 #' data(pride)
 #' glmfit <- stats::glm(PCR_RSV ~ SEX + RSVINF + REGION + AGE + ELTATOP + EINZ + EXT, 
 #'                      data = pride,
@@ -52,7 +52,7 @@
 #' propensity(glmfit)
 #' summary(propensity(glmfit))
 #' plot(propensity(glmfit))
-#'
+#' }
 #' @export
 propensity <- function(fit, weight_method = 1) {
   UseMethod("propensity")

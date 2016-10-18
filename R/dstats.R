@@ -41,14 +41,7 @@
 #'                      data = pride,
 #'                      family = stats::binomial())
 #' dstats(glmfit)
-# summary(dstats(glmfit))
-# plot(dstats(glmfit))
 #'
-#' @export
-propensity <- function(...) {
-  .Deprecated("dstats() and/or standardized_differences()")
-}
-
 #' @export
 dstats <- function(fit) {
   UseMethod("dstats")
