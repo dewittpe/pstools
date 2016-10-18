@@ -86,7 +86,7 @@ psweights_.data.frame <- function(.data, exposure_col, ps_col) {
                         .dots = list(
                                      "psw_IPW"           = lazyeval::interp( ~ 1/(z*ps + (1-z)*(1-ps)),                  ps = as.name(ps_col), z = as.name(exposure_col)),
                                      "psw_ACE_Exposed"   = lazyeval::interp( ~ z + (1-z)*ps/(1-ps),                      ps = as.name(ps_col), z = as.name(exposure_col)),
-                                     "psw_ACE_Unxxposed" = lazyeval::interp( ~ z * (1-ps)/ps + (1-z),                    ps = as.name(ps_col), z = as.name(exposure_col)),
+                                     "psw_ACE_Unexposed" = lazyeval::interp( ~ z * (1-ps)/ps + (1-z),                    ps = as.name(ps_col), z = as.name(exposure_col)),
                                      "psw_ACE_MostInfo"  = lazyeval::interp( ~ z * (1-ps) + (1-z) * ps,                  ps = as.name(ps_col), z = as.name(exposure_col)),
                                      "psw_ACE_MWP"       = lazyeval::interp( ~ min(c(ps, 1-ps)) / (z*ps + (1-z)*(1-ps)), ps = as.name(ps_col), z = as.name(exposure_col))
                                      )
