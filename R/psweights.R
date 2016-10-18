@@ -3,13 +3,15 @@
 #' Five different matching weights based on an exposure and propensity score.
 #'
 #' @details
+#' Let p denote the propensity score for a subject.  The five weights are as follows.
 #' 
-#' \tabular{ll}{
-#' Average causal effect in study population                                \tab \code{psw_IPW}           \cr
-#' Average causal effect in exposed                                         \tab \code{psw_ACE_Exposed}   \cr
-#' Average causal effect in unexposed                                       \tab \code{psw_ACE_Unexposed} \cr
-#' Average causes effect in population for which sample is most informative \tab \code{psw_ACE_MostInfo}  \cr
-#' Average causal effect in mathcin weight population                       \tab \code{psw_ACE_MWP}       \cr
+#' \tabular{llcc}{
+#'                                                                          \tab                          \tab Exposed        \tab Non-Exposed        \cr
+#' Average causal effect in study population                                \tab \code{psw_IPW}           \tab 1/p            \tab 1/(1-p)            \cr
+#' Average causal effect in exposed                                         \tab \code{psw_ACE_Exposed}   \tab 1              \tab p/(1-p)            \cr
+#' Average causal effect in unexposed                                       \tab \code{psw_ACE_Unexposed} \tab (1-p)/p        \tab 1                  \cr
+#' Average causes effect in population for which sample is most informative \tab \code{psw_ACE_MostInfo}  \tab 1-p            \tab p                  \cr
+#' Average causal effect in mathcin weight population                       \tab \code{psw_ACE_MWP}       \tab min(p,(1-p))/p \tab min(p,(1-p))/(1-p) \cr
 #' }
 #'
 #' @param .data a \code{data.frame}
@@ -52,6 +54,19 @@ psweights_ <- function(.data, exposure_col, ps_col) {
 }
 
 #' @export
+psweights_.grouped_df <- function(.data, exposure_col, ps_col) {
+  warning("grouped_df will be ungrouped and a rowwise opperation will take place.", call. = FALSE)
+  psweights_(dplyr::ungroup(.data), deparse(substitute(exposure_col)), deparse(substitute(ps)))
+}
+
+#' @export
+psweights_.rowwise_df <- function(.data, exposure_col, ps_col) {
+  warning("rowwise_df will be ungrouped.", call. = FALSE)
+  psweights_(dplyr::ungroup(.data), deparse(substitute(exposure_col)), deparse(substitute(ps)))
+}
+
+
+#' @export
 psweights_.data.frame <- function(.data, exposure_col, ps_col) {
   
   if (!all(.data[[exposure_col]] %in% c(0, 1))) {
@@ -69,16 +84,14 @@ psweights_.data.frame <- function(.data, exposure_col, ps_col) {
   out <-dplyr::rowwise(.data)
   out <- dplyr::mutate_(out,
                         .dots = list(
-                                     "psw_IPW" = lazyeval::interp( ~ 1/(z*ps + (1-z)*(1-ps)),  ps = as.name(ps_col), z = as.name(exposure_col)),
-                                     "psw_ACE_Exposed" = lazyeval::interp( ~ z + (1-z)*ps/(1-ps),  ps = as.name(ps_col), z = as.name(exposure_col)),
-                                     "psw_ACE_Unxxposed" = lazyeval::interp( ~ z * (1-ps)/ps + (1-z),  ps = as.name(ps_col), z = as.name(exposure_col)),
-                                     "psw_ACE_MostInfo" = lazyeval::interp( ~ z * (1-ps) + (1-z) * ps, ps = as.name(ps_col), z = as.name(exposure_col)),
-                                     "psw_ACE_MWP" = lazyeval::interp( ~ min(c(ps, 1-ps)) / (z*ps + (1-z)*(1-ps)), ps = as.name(ps_col), z = as.name(exposure_col))
+                                     "psw_IPW"           = lazyeval::interp( ~ 1/(z*ps + (1-z)*(1-ps)),                  ps = as.name(ps_col), z = as.name(exposure_col)),
+                                     "psw_ACE_Exposed"   = lazyeval::interp( ~ z + (1-z)*ps/(1-ps),                      ps = as.name(ps_col), z = as.name(exposure_col)),
+                                     "psw_ACE_Unxxposed" = lazyeval::interp( ~ z * (1-ps)/ps + (1-z),                    ps = as.name(ps_col), z = as.name(exposure_col)),
+                                     "psw_ACE_MostInfo"  = lazyeval::interp( ~ z * (1-ps) + (1-z) * ps,                  ps = as.name(ps_col), z = as.name(exposure_col)),
+                                     "psw_ACE_MWP"       = lazyeval::interp( ~ min(c(ps, 1-ps)) / (z*ps + (1-z)*(1-ps)), ps = as.name(ps_col), z = as.name(exposure_col))
                                      )
                         )
   out <- dplyr::ungroup(out)
   out 
 }
-
-
 
