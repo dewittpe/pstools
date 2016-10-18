@@ -60,6 +60,8 @@ propensity <- function(fit, weight_method = 1) {
 
 #' @export
 propensity.glm <- function(fit, weight_method = 1) {
+  .Deprecated("use dstats and/or standardized_differences")
+
   if (!(weight_method %in% 1:3)) { 
     stop("weight_method needs to be 1, 2, or 3.")
   }
