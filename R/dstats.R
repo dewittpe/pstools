@@ -19,7 +19,13 @@
 #' See \code{\link{psweights}} for details on the propensity score based weights
 #' used by \code{dstats}.
 #' 
-#' @param fit a regression object.
+#' @param x a regression object with class \code{glm} or a \code{data.frame}
+#' @param exposure_col column in \code{x} indicating the exposure (1) and
+#' non-exposure (0).  Ignored if \code{x} is a regression model.
+#' @param ps_col column in \code{x} indicating the propensity scores.  Ignored
+#' if \code{x} is a regression model.
+#' @param ... only used if \code{x} is a \code{data.frame}.  List the variables
+#' in \code{x} to summarize. Default: summarize all columns.
 #'
 #' @return A \code{pstools_dstats} object which is a
 #' \code{data.frame}, with descriptive statistics for each variable in and out
@@ -43,32 +49,37 @@
 #' dstats(glmfit)
 #'
 #' @export
-dstats <- function(fit) {
+dstats <- function(x, ...) {
   UseMethod("dstats")
 }
 
 #' @export
-dstats.glm <- function(fit) {
-  if (stats::family(fit)$family != "binomial") {
+dstats.data.frame <- function(x, exposure_col, ps_col, ...) {
+  stop("To be built") 
+}
+
+#' @export
+dstats.glm <- function(x, ...) {
+  if (stats::family(x)$family != "binomial") {
     stop("expected binomial family regression model.")
   }
 
   # Exposure 1, no-exposure 0
-  z <- stats::model.frame(fit)[[1]]
+  z <- stats::model.frame(x)[[1]]
   if (!all(z %in% c(0, 1))) { 
     stop("Expected Outcome vector is a 0/1 integer vector.")
   } 
 
   # propensity scores
-  ps <- qwraps2::invlogit(stats::fitted(fit))
+  ps <- qwraps2::invlogit(stats::fitted(x))
 
   # get all the variable from the model fit and build the needed model matrix,
   # including the dumby variables for factors and character variables.
-  av <- all.vars(stats::formula(fit))
+  av <- all.vars(stats::formula(x))
 
-  mm <- lapply(attr(stats::terms(stats::formula(fit)), "term.labels"),
+  mm <- lapply(attr(stats::terms(stats::formula(x)), "term.labels"),
                function(x) { stats::as.formula(paste("~", x, "+0")) }) 
-  mm <- lapply(mm, stats::model.matrix, data = dplyr::select_(fit$data, .dots = av))
+  mm <- lapply(mm, stats::model.matrix, data = dplyr::select_(x$data, .dots = av))
   mm <- do.call(cbind, mm)
 
   # build a summary data.frame and add weights
@@ -97,7 +108,7 @@ dstats.glm <- function(fit) {
                                         )) 
   out <- dplyr::ungroup(out)
 
-  attr(out, "continuous") <-  as.integer(unique(out$key) %in% names(stats::model.frame(fit)))
+  attr(out, "continuous") <-  as.integer(unique(out$key) %in% names(stats::model.frame(x)))
   class(out) <- c("pstools_dstats", class(out))
   out
 }
