@@ -3,6 +3,7 @@
 S3method(dstats,glm)
 S3method(gee_stepper,geeglm)
 S3method(plot,pstools_propensity)
+S3method(plot,pstools_psweights)
 S3method(plot,pstools_std_diffs)
 S3method(print,pstools_std_diffs)
 S3method(propensity,glm)

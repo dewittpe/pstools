@@ -31,15 +31,17 @@
 #'
 #' ourpride <- dplyr::mutate(pride, pp = qwraps2::invlogit(fitted(glmfit))) 
 #'
-#' psweights(dplyr::tbl_df(ourpride), PCR_RSV, pp)
+#' psw <- psweights(dplyr::tbl_df(ourpride), PCR_RSV, pp)
+#' psw
+#' 
+#' # Mirrored Histograms
+#' plot(psw)
 #' 
 #' @references
 #' Li, Liang, and Tom Greene. "A weighting analogue to pair matching in
 #' propensity score analysis." The international journal of biostatistics 9.2
 #' (2013): 215-234.
 #'
-#' 
-
 #' @export
 psweights <- function(.data, exposure, ps) {
   psweights_(.data, deparse(substitute(exposure)), deparse(substitute(ps)))
@@ -48,7 +50,7 @@ psweights <- function(.data, exposure, ps) {
 #' @param exposure_col a character string
 #' @param ps_col a character string
 #' @export
-#' @describeIn psweights A version of psweights suitable for programming with
+#' @rdname psweights
 psweights_ <- function(.data, exposure_col, ps_col) {
   UseMethod("psweights_")
 }
@@ -92,7 +94,45 @@ psweights_.data.frame <- function(.data, exposure_col, ps_col) {
                                      )
                         )
   out <- dplyr::ungroup(out)
+  attr(out, "exposure_col") <- exposure_col
+  attr(out, "ps_col") <- ps_col
   class(out) <- c("pstools_psweights", class(out))
   out 
 }
 
+
+#' @export
+#' @param x a \code{pstools_psweights} object
+#' @param ... ignored
+#' @describeIn psweights Mirrored histograms
+plot.pstools_psweights <- function(x, ...) {
+
+  dat <- tidyr::gather_(x, 
+                        key_col = "method",
+                        value_col = "value",
+                        gather_cols = c("psw_IPW",
+                                        "psw_ACE_Exposed",
+                                        "psw_ACE_Unexposed",
+                                        "psw_ACE_MostInfo",
+                                        "psw_ACE_MWP"),
+                        factor_key = TRUE) 
+
+  ggplot2::ggplot() +
+  ggplot2::aes_string(x = attr(x, "ps_col")) +
+
+  ggplot2::geom_histogram(data = dplyr::filter_(x, .dots = lazyeval::interp( ~ z == 1, z = as.name(attr(x, "exposure_col"))))) +
+  ggplot2::geom_histogram(data = dplyr::filter_(x, .dots = lazyeval::interp( ~ z == 0, z = as.name(attr(x, "exposure_col")))),
+                          mapping = ggplot2::aes_string(y = "-..count..")) +
+
+  ggplot2::geom_histogram(data = dplyr::filter_(dat, .dots = lazyeval::interp( ~ z == 1, z = as.name(attr(x, "exposure_col")))),
+                          mapping = ggplot2::aes_string(weight = "value", fill = "method"),
+                          alpha = 0.5
+                          ) +
+  ggplot2::geom_histogram(data = dplyr::filter_(dat, .dots = lazyeval::interp( ~ z == 0, z = as.name(attr(x, "exposure_col")))),
+                          mapping = ggplot2::aes_string(weight = "-value", fill = "method"),
+                          alpha = 0.5
+                          ) +
+  ggplot2::facet_wrap( ~ method, nrow = 1)
+                     
+
+}
