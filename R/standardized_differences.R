@@ -117,11 +117,11 @@ print.pstools_std_diffs <- function(x, ...) {
   print(x)
 }
 
-#' @param x a \code{pstools_std_diffs} object
 #' @param adj_methods a character vector, names standardized differences
 #' adjustment methods to include in the plot.
 #' @export
-#' @describeIn standardized_differences
+#' @describeIn standardized_differences plotting method for
+#' \code{pstools_std_diffs} objects.
 plot.pstools_std_diffs <- function(x, adj_methods = c("adj_IPW", "adj_ACE_Exposed", "adj_ACE_Unexposed", "adj_ACE_MostInfo", "adj_ACE_MWP"), ...) { 
   dat <- dplyr::bind_rows(x, .id = "adjustment")
   dat <- dplyr::filter_(dat, .dots = ~ adjustment %in% c("unadj", adj_methods))
