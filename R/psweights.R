@@ -48,14 +48,14 @@ psweights <- function(.data, exposure, ps) {
 #' @param exposure_col a character string
 #' @param ps_col a character string
 #' @export
-#' @rdname psweights
+#' @describeIn psweights A version of psweights suitable for programming with
 psweights_ <- function(.data, exposure_col, ps_col) {
   UseMethod("psweights_")
 }
 
 #' @export
 psweights_.grouped_df <- function(.data, exposure_col, ps_col) {
-  warning("grouped_df will be ungrouped and a rowwise opperation will take place.", call. = FALSE)
+  warning("grouped_df will be ungrouped and a rowwise operation will take place.", call. = FALSE)
   psweights_(dplyr::ungroup(.data), deparse(substitute(exposure_col)), deparse(substitute(ps)))
 }
 
@@ -92,6 +92,7 @@ psweights_.data.frame <- function(.data, exposure_col, ps_col) {
                                      )
                         )
   out <- dplyr::ungroup(out)
+  class(out) <- c("pstools_psweights", class(out))
   out 
 }
 
