@@ -55,7 +55,36 @@ dstats <- function(x, ...) {
 
 #' @export
 dstats.data.frame <- function(x, exposure_col, ps_col, ...) {
-  stop("To be built") 
+  out <- psweights_(x, exposure_col, ps_col)
+
+  # Calculate the mean and variance for (unadjusted) values and adjusted values
+  # out <- tidyr::gather(out, key, value, -z, -w)
+  out <- tidyr::gather_(out, key_col = "key", value_col = "value",
+                        gather_cols = setdiff(colnames(x), c(exposure_col, ps_col))
+                        )
+
+  out <- dplyr::group_by_(out, .dots = list( ~ key, lazyeval::interp( ~ z, z = as.name(exposure_col))))
+
+
+  out <- dplyr::summarize_(out, 
+                           .dots = list("unadj_mean" = ~ mean(value), 
+                                        "unadj_var"  = ~ var(value),
+                                        "adj_mean_IPW" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_IPW")),
+                                        "adj_var_IPW"  = lazyeval::interp(~ sum(w * (value - adj_mean_IPW)^2) / (sum(w) - 1), w = as.name("psw_IPW")), 
+                                        "adj_mean_ACE_Exposed" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_Exposed")),
+                                        "adj_var_ACE_Exposed"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_Exposed)^2) / (sum(w) - 1), w = as.name("psw_ACE_Exposed")),
+                                        "adj_mean_ACE_Unexposed" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_Unexposed")),
+                                        "adj_var_ACE_Unexposed"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_Unexposed)^2) / (sum(w) - 1), w = as.name("psw_ACE_Unexposed")),
+                                        "adj_mean_ACE_MostInfo" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_MostInfo")),
+                                        "adj_var_ACE_MostInfo"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_MostInfo)^2) / (sum(w) - 1), w = as.name("psw_ACE_MostInfo")),
+                                        "adj_mean_ACE_MWP" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_MWP")),
+                                        "adj_var_ACE_MWP"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_MWP)^2) / (sum(w) - 1), w = as.name("psw_ACE_MWP")) 
+                                        )) 
+  out <- dplyr::ungroup(out)
+
+  attr(out, "continuous") <-  as.integer(unique(out$key) %in% names(stats::model.frame(x)))
+  return(out)
+  class(out) <- c("pstools_dstats", class(out))
 }
 
 #' @export
@@ -84,32 +113,8 @@ dstats.glm <- function(x, ...) {
 
   # build a summary data.frame and add weights
   out <- dplyr::bind_cols(dplyr::data_frame(z, ps), dplyr::as_data_frame(mm)) 
-  out <- psweights_(out, "z", "ps")
-
-  # Calculate the mean and variance for (unadjusted) values and adjusted values
-  # out <- tidyr::gather(out, key, value, -z, -w)
-  out <- tidyr::gather_(out, key_col = "key", value_col = "value",
-                        gather_cols = c(colnames(mm)))
-
-  out <- dplyr::group_by_(out, .dots = list( ~ key, ~ z))
-  out <- dplyr::summarize_(out, 
-                           .dots = list("unadj_mean" = ~ mean(value), 
-                                        "unadj_var"  = ~ var(value),
-                                        "adj_mean_IPW" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_IPW")),
-                                        "adj_var_IPW"  = lazyeval::interp(~ sum(w * (value - adj_mean_IPW)^2) / (sum(w) - 1), w = as.name("psw_IPW")), 
-                                        "adj_mean_ACE_Exposed" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_Exposed")),
-                                        "adj_var_ACE_Exposed"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_Exposed)^2) / (sum(w) - 1), w = as.name("psw_ACE_Exposed")),
-                                        "adj_mean_ACE_Unexposed" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_Unexposed")),
-                                        "adj_var_ACE_Unexposed"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_Unexposed)^2) / (sum(w) - 1), w = as.name("psw_ACE_Unexposed")),
-                                        "adj_mean_ACE_MostInfo" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_MostInfo")),
-                                        "adj_var_ACE_MostInfo"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_MostInfo)^2) / (sum(w) - 1), w = as.name("psw_ACE_MostInfo")),
-                                        "adj_mean_ACE_MWP" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_MWP")),
-                                        "adj_var_ACE_MWP"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_MWP)^2) / (sum(w) - 1), w = as.name("psw_ACE_MWP")) 
-                                        )) 
-  out <- dplyr::ungroup(out)
-
+  out <- dstats.data.frame(out, "z", "ps") 
   attr(out, "continuous") <-  as.integer(unique(out$key) %in% names(stats::model.frame(x)))
-  class(out) <- c("pstools_dstats", class(out))
   out
 }
 
