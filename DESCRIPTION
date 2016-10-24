@@ -1,6 +1,6 @@
 Package: pstools
 Title: Propensity Score Analysis Tools
-Version: 0.1.0.9000
+Version: 0.1.1
 Authors@R: person("Peter", "DeWitt", email = "peter.dewitt@ucdenver.edu", role = c("aut", "cre"))
 Description: A collection of helper-functions for analysis, summary statistics,
     and graphics for propensity analyses.

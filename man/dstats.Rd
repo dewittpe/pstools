@@ -2,12 +2,23 @@
 % Please edit documentation in R/dstats.R
 \name{dstats}
 \alias{dstats}
+\alias{dstats.formula}
 \title{Descriptive Statistics}
 \usage{
-dstats(fit)
+dstats(x, ...)
+
+\method{dstats}{formula}(formula, data, ps, ...)
 }
 \arguments{
-\item{fit}{a regression object.}
+\item{x}{a regression object with class \code{glm}}
+
+\item{...}{ignored}
+
+\item{formula}{a regression formula of the form \code{exposure ~ predictors1 + predictors2}}
+
+\item{data}{a \code{date.frame}}
+
+\item{ps}{the bare column name in \code{data} indicating the propensity scores}
 }
 \value{
 A \code{pstools_dstats} object which is a

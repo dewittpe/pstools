@@ -19,13 +19,8 @@
 #' See \code{\link{psweights}} for details on the propensity score based weights
 #' used by \code{dstats}.
 #' 
-#' @param x a regression object with class \code{glm} or a \code{data.frame}
-#' @param exposure_col column in \code{x} indicating the exposure (1) and
-#' non-exposure (0).  Ignored if \code{x} is a regression model.
-#' @param ps_col column in \code{x} indicating the propensity scores.  Ignored
-#' if \code{x} is a regression model.
-#' @param ... only used if \code{x} is a \code{data.frame}.  List the variables
-#' in \code{x} to summarize. Default: summarize all columns.
+#' @param x a regression object with class \code{glm}
+#' @param ... ignored
 #'
 #' @return A \code{pstools_dstats} object which is a
 #' \code{data.frame}, with descriptive statistics for each variable in and out
@@ -49,12 +44,33 @@
 #' dstats(glmfit)
 #'
 #' @export
-dstats <- function(x, ...) {
+dstats <- function(x, ...) { 
   UseMethod("dstats")
 }
 
 #' @export
-dstats.formula <- function(formula, data, ps) { 
+dstats.glm <- function(x, ...) {
+  if (stats::family(x)$family != "binomial") {
+    stop("expected binomial family regression model.")
+  }
+
+  # propensity scores
+  ps <- qwraps2::invlogit(stats::fitted(x))
+
+  dstats.formula(stats::formula(x), cbind(x[["data"]], ps = ps), ps) 
+} 
+
+#' @export
+dstats.default <- function(x, ...) {
+  message("Unknown class for dstats")
+}
+
+#' @export
+#' @rdname dstats
+#' @param formula a regression formula of the form \code{exposure ~ predictors1 + predictors2} 
+#' @param data a \code{date.frame}
+#' @param ps the bare column name in \code{data} indicating the propensity scores
+dstats.formula <- function(formula, data, ps, ...) { 
   lhs_vars <- all.vars(lazyeval::f_lhs(formula))
   rhs_vars <- all.vars(lazyeval::f_rhs(formula))
 
@@ -98,14 +114,3 @@ dstats.formula <- function(formula, data, ps) {
   out 
 }
 
-#' @export
-dstats.glm <- function(x, ...) {
-  if (stats::family(x)$family != "binomial") {
-    stop("expected binomial family regression model.")
-  }
-
-  # propensity scores
-  ps <- qwraps2::invlogit(stats::fitted(x))
-
-  dstats.formula(formula(x), cbind(x[["data"]], ps = ps), ps) 
-} 

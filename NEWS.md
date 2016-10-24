@@ -1,7 +1,8 @@
-# pstools 0.1.0.9000
+# pstools 0.1.1
 
 ## Important Changes to API
 * `propensity` has been deprecated
+* `dstats` has methods for `glm` and `formula`
 
 ## New Features
 * `dstats()` and `standardized_differences()` added to replace 
