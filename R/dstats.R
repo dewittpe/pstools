@@ -95,49 +95,7 @@ dstats.formula <- function(formula, data, ps) {
   attr(out, "exposure_col") <- exposure_col
   attr(out, "ps_col")       <- ps_col
   class(out) <- c("pstools_dstats", class(out))
-  out
-  return(out)
-
-
-  # build a summary data.frame and add weights
-  # out <- dplyr::bind_cols(dplyr::data_frame(z, ps), dplyr::as_data_frame(mm)) 
-  # out <- dstats.data.frame(out, "z", "ps") 
-  # attr(out, "continuous") <-  as.integer(unique(out$key) %in% names(stats::model.frame(x)))
-  # out
-  
-}
-
-#' @export
-dstats.data.frame <- function(x, exposure_col, ps_col, ...) { 
-  stop("pstools::dstats.data.frame needs to be fixed.")
-  out <- psweights_(x, exposure_col, ps_col)
-
-  out <- tidyr::gather_(out, key_col = "key", value_col = "value",
-                        gather_cols = setdiff(colnames(x), c(exposure_col, ps_col))
-                        )
-  return(out)
-
-  out <- dplyr::group_by_(out, .dots = list( ~ key, lazyeval::interp( ~ z, z = as.name(exposure_col))))
-
-  out <- dplyr::summarize_(out, 
-                           .dots = list("unadj_mean" = ~ mean(value), 
-                                        "unadj_var"  = ~ var(value),
-                                        "adj_mean_IPW" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_IPW")),
-                                        "adj_var_IPW"  = lazyeval::interp(~ sum(w * (value - adj_mean_IPW)^2) / (sum(w) - 1), w = as.name("psw_IPW")), 
-                                        "adj_mean_ACE_Exposed" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_Exposed")),
-                                        "adj_var_ACE_Exposed"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_Exposed)^2) / (sum(w) - 1), w = as.name("psw_ACE_Exposed")),
-                                        "adj_mean_ACE_Unexposed" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_Unexposed")),
-                                        "adj_var_ACE_Unexposed"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_Unexposed)^2) / (sum(w) - 1), w = as.name("psw_ACE_Unexposed")),
-                                        "adj_mean_ACE_MostInfo" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_MostInfo")),
-                                        "adj_var_ACE_MostInfo"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_MostInfo)^2) / (sum(w) - 1), w = as.name("psw_ACE_MostInfo")),
-                                        "adj_mean_ACE_MWP" = lazyeval::interp(~ sum(w * value) / sum(w), w = as.name("psw_ACE_MWP")),
-                                        "adj_var_ACE_MWP"  = lazyeval::interp(~ sum(w * (value - adj_mean_ACE_MWP)^2) / (sum(w) - 1), w = as.name("psw_ACE_MWP")) 
-                                        )) 
-  out <- dplyr::ungroup(out)
-
-  attr(out, "continuous") <-  as.integer(unique(out$key) %in% names(x))
-  class(out) <- c("pstools_dstats", class(out))
-  out
+  out 
 }
 
 #' @export
@@ -146,27 +104,8 @@ dstats.glm <- function(x, ...) {
     stop("expected binomial family regression model.")
   }
 
-  # Exposure 1, no-exposure 0
-  z <- stats::model.frame(x)[[1]]
-  if (!all(z %in% c(0, 1))) { 
-    stop("Expected Outcome vector is a 0/1 integer vector.")
-  } 
-
   # propensity scores
   ps <- qwraps2::invlogit(stats::fitted(x))
 
-  # get all the variable from the model fit and build the needed model matrix,
-  # including the dummy variables for factors and character variables.
-  av <- all.vars(stats::formula(x))
-
-  mm <- lapply(attr(stats::terms(stats::formula(x)), "term.labels"),
-               function(x) { stats::as.formula(paste("~", x, "+0")) }) 
-  mm <- lapply(mm, stats::model.matrix, data = dplyr::select_(x$data, .dots = av))
-  mm <- do.call(cbind, mm)
-
-  # build a summary data.frame and add weights
-  out <- dplyr::bind_cols(dplyr::data_frame(z, ps), dplyr::as_data_frame(mm)) 
-  out <- dstats.data.frame(out, "z", "ps") 
-  # attr(out, "continuous") <-  as.integer(unique(out$key) %in% names(stats::model.frame(x)))
-  out
+  dstats.formula(formula(x), cbind(x[["data"]], ps = ps), ps) 
 } 
