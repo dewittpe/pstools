@@ -38,12 +38,12 @@ standardized_differences.glm <- function(x, ...) {
 #' @export
 standardized_differences.pstools_dstats <- function(x, ...) {
   sets <-
-    list(dplyr::select_(x, ~ key, ~ z, ~ unadj_mean, ~ unadj_var),
-         dplyr::select_(x, ~ key, ~ z, ~ adj_mean_IPW, ~ adj_var_IPW),
-         dplyr::select_(x, ~ key, ~ z, ~ adj_mean_ACE_Exposed, ~ adj_var_ACE_Exposed),
-         dplyr::select_(x, ~ key, ~ z, ~ adj_mean_ACE_Unexposed, ~ adj_var_ACE_Unexposed),
-         dplyr::select_(x, ~ key, ~ z, ~ adj_mean_ACE_MostInfo, ~ adj_var_ACE_MostInfo),
-         dplyr::select_(x, ~ key, ~ z, ~ adj_mean_ACE_MWP, ~ adj_var_ACE_MWP)
+    list(dplyr::select_(x, ~ key, lazyeval::interp( ~ z, z = as.name(attr(x, "exposure_col"))), ~ unadj_mean, ~ unadj_var),
+         dplyr::select_(x, ~ key, lazyeval::interp( ~ z, z = as.name(attr(x, "exposure_col"))), ~ adj_mean_IPW, ~ adj_var_IPW),
+         dplyr::select_(x, ~ key, lazyeval::interp( ~ z, z = as.name(attr(x, "exposure_col"))), ~ adj_mean_ACE_Exposed, ~ adj_var_ACE_Exposed),
+         dplyr::select_(x, ~ key, lazyeval::interp( ~ z, z = as.name(attr(x, "exposure_col"))), ~ adj_mean_ACE_Unexposed, ~ adj_var_ACE_Unexposed),
+         dplyr::select_(x, ~ key, lazyeval::interp( ~ z, z = as.name(attr(x, "exposure_col"))), ~ adj_mean_ACE_MostInfo, ~ adj_var_ACE_MostInfo),
+         dplyr::select_(x, ~ key, lazyeval::interp( ~ z, z = as.name(attr(x, "exposure_col"))), ~ adj_mean_ACE_MWP, ~ adj_var_ACE_MWP)
          )
   
   std_diffs <-
@@ -59,13 +59,15 @@ standardized_differences.pstools_dstats <- function(x, ...) {
     lapply(sets,
            function(x) {
              rtn <-
-               dplyr::left_join(dplyr::filter_(x, .dots = ~ z == 0),
-                                dplyr::filter_(x, .dots = ~ z == 1),
+               dplyr::left_join(dplyr::filter_(x, .dots = lazyeval::interp( ~ z == 0, z = as.name(attr(x, "exposure_col")))),
+                                dplyr::filter_(x, .dots = lazyeval::interp( ~ z == 1, z = as.name(attr(x, "exposure_col")))),
                                 by = "key",
                                 suffix = c(".z0", ".z1"))
              names(rtn) <- gsub(".*mean.*(\\.z\\d)", "mean\\1", names(rtn))
              names(rtn) <- gsub(".*var.*(\\.z\\d)", "var\\1", names(rtn))
-             dplyr::select_(rtn, .dots = list( ~ - z.z0, ~ - z.z1))
+             dplyr::select_(rtn, .dots = list(lazyeval::interp(~ - z.z0, z.z0 = as.name(paste0(attr(x, "exposure_col"), ".z0"))),
+                                              lazyeval::interp(~ - z.z1, z.z1 = as.name(paste0(attr(x, "exposure_col"), ".z1")))
+                                              ))
            })
 
   out <-
