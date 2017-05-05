@@ -57,7 +57,7 @@ psweights_ <- function(.data, exposure_col, ps_col) {
 
 #' @export
 psweights_.grouped_df <- function(.data, exposure_col, ps_col) {
-  warning("grouped_df will be ungrouped and a rowwise operation will take place.", call. = FALSE)
+  warning("grouped_df will be ungrouped and a row-wise operation will take place.", call. = FALSE)
   psweights_(dplyr::ungroup(.data), deparse(substitute(exposure_col)), deparse(substitute(ps)))
 }
 
@@ -72,7 +72,7 @@ psweights_.rowwise_df <- function(.data, exposure_col, ps_col) {
 psweights_.data.frame <- function(.data, exposure_col, ps_col) {
   
   if (!all(.data[[exposure_col]] %in% c(0, 1))) {
-    stop("Exposure Vector needs to be 0/1", call. = FALSE)
+    stop("Exposure vector needs to be 0/1", call. = FALSE)
   }
 
   if (any(.data[[ps_col]] < 0 | .data[[ps_col]] > 1)) {

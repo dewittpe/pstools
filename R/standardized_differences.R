@@ -2,7 +2,7 @@
 #' 
 #' Calculate the standardized differences (percentages).
 #'
-#' @param x a logistic regression object, or a \code{pstools_dstats} object.
+#' @param x a logistic regression object or a \code{pstools_dstats} object.
 #' @param ... ignored at this time.
 #'
 #' @return A list of \code{data.frame}s each element of the list is for a
