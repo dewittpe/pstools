@@ -1,7 +1,10 @@
 Package: pstools
 Title: Propensity Score Analysis Tools
 Version: 0.1.1
-Authors@R: person("Peter", "DeWitt", email = "peter.dewitt@ucdenver.edu", role = c("aut", "cre"))
+Authors@R: c(
+    person("Peter", "DeWitt", , "dewittpe@gmail.com", role = c("aut", "cre")),
+    person("Tell",  "Bennett", , "tell.bennett@ucdenver.edu", role = c("ctb"))
+    )
 Description: A collection of helper-functions for analysis, summary statistics,
     and graphics for propensity analyses.
 Depends:

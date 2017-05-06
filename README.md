@@ -8,7 +8,7 @@ Tools for Propensity Score Analyses
 
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/pstools)](https://cran.r-project.org/package=pstools)
 
-[![Licence](https://img.shields.io/badge/licence-GPL--2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+[![License](https://img.shields.io/badge/licence-GPL--2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
 [![minimal R version](https://img.shields.io/badge/R%3E%3D-3.0.2-6666ff.svg)](https://cran.r-project.org/)
 
 ## Examples
